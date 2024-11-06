@@ -31,7 +31,32 @@ jobs:
         env:
           EC2_SSH_KEY_BASE64: ${{ secrets.EC2_SSH_KEY_BASE64 }}
 
-      - name: Deploy to EC2
+      - name: Deploy the Go Application to EC2
         run: |
+          # Copy the built Go binary to EC2
           scp -o StrictHostKeyChecking=no myapp ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/myapp
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "chmod +x /home/${{ secrets.EC2_USER }}/myapp && sudo systemctl restart myapp"
+          
+          # Create and configure the systemd service on EC2
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Create a systemd service file
+            echo "[Unit]
+            Description=My Go Application
+            After=network.target
+
+            [Service]
+            ExecStart=/home/${{ secrets.EC2_USER }}/myapp
+            Restart=always
+            User=ec2-user
+
+            [Install]
+            WantedBy=multi-user.target" | sudo tee /etc/systemd/system/myapp.service > /dev/null
+
+            # Reload systemd to recognize the new service
+            sudo systemctl daemon-reload
+
+            # Enable the service to start on boot
+            sudo systemctl enable myapp.service
+
+            # Start the service
+            sudo systemctl start myapp.service
+          EOF
