@@ -1,4 +1,4 @@
-name: Deploy Go App to EC2
+name: Manual Deployment
 
 on:
   push:
