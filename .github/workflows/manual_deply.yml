@@ -38,10 +38,18 @@ jobs:
 
       - name: Deploy the Go Application to EC2
         run: |
-          # SSH into EC2 to rename the old binary if it exists
+          # SSH into EC2 to stop the running myapp process if it exists
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # Rename the old application if it's running
+            # Stop the myapp process if it's running
+            pid=$(pgrep -f myapp)
+            if [ -n "$pid" ]; then
+              echo "Stopping the running myapp process with PID $pid"
+              sudo kill -9 $pid
+            fi
+
+            # Rename the old binary if it exists
             if [ -f /home/${{ secrets.EC2_USER }}/myapp ]; then
+              echo "Renaming the old myapp binary"
               mv /home/${{ secrets.EC2_USER }}/myapp /home/${{ secrets.EC2_USER }}/myapp.old
             fi
           EOF
@@ -49,9 +57,9 @@ jobs:
           # Copy the new Go binary to EC2
           scp -o StrictHostKeyChecking=no myapp ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/myapp
 
-          # Create and configure the systemd service on EC2
+          # SSH into EC2 to create the systemd service and start the new app
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # Create a systemd service file
+            # Create or update the systemd service file
             echo "[Unit]
             Description=My Go Application
             After=network.target
@@ -70,6 +78,6 @@ jobs:
             # Enable the service to start on boot
             sudo systemctl enable myapp.service
 
-            # Start the service
+            # Start the new service
             sudo systemctl start myapp.service
           EOF
