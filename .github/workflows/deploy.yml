@@ -46,7 +46,7 @@ jobs:
             [Service]
             ExecStart=/home/${{ secrets.EC2_USER }}/myapp
             Restart=always
-            User=ec2-user
+            User=${{ secrets.EC2_USER }}
 
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/myapp.service > /dev/null
