@@ -1,9 +1,6 @@
 name: Manual Deployment
 
 on:
-  push:
-    branches:
-      - main  # Automatically deploy when pushing to the main branch
   workflow_dispatch:
     inputs:
       branch:
