@@ -38,46 +38,19 @@ jobs:
 
       - name: Deploy the Go Application to EC2
         run: |
-          # SSH into EC2 to stop the running myapp process if it exists
+          # SSH into EC2 to stop and disable the service, then delete the binary
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # Stop the myapp process if it's running
-            pid=$(pgrep -f myapp)
+            # Stop and disable the systemd service if it exists
+            sudo systemctl stop myapp.service || true
+            sudo systemctl disable myapp.service || true
+
+            # Ensure no process is using the binary file
+            pid=$(pgrep -f /home/${{ secrets.EC2_USER }}/myapp)
             if [ -n "$pid" ]; then
               echo "Stopping the running myapp process with PID $pid"
               sudo kill -9 $pid
             fi
 
-            # Rename the old binary if it exists
+            # Remove the old binary if it exists
             if [ -f /home/${{ secrets.EC2_USER }}/myapp ]; then
-              echo "Renaming the old myapp binary"
-              mv /home/${{ secrets.EC2_USER }}/myapp /home/${{ secrets.EC2_USER }}/myapp.old
-            fi
-          EOF
-
-          # Copy the new Go binary to EC2
-          scp -o StrictHostKeyChecking=no myapp ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/myapp
-
-          # SSH into EC2 to create the systemd service and start the new app
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # Create or update the systemd service file
-            echo "[Unit]
-            Description=My Go Application
-            After=network.target
-
-            [Service]
-            ExecStart=/home/${{ secrets.EC2_USER }}/myapp
-            Restart=always
-            User=ec2-user
-
-            [Install]
-            WantedBy=multi-user.target" | sudo tee /etc/systemd/system/myapp.service > /dev/null
-
-            # Reload systemd to recognize the new service
-            sudo systemctl daemon-reload
-
-            # Enable the service to start on boot
-            sudo systemctl enable myapp.service
-
-            # Start the new service
-            sudo systemctl start myapp.service
-          EOF
+              echo "
