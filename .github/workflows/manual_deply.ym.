@@ -3,7 +3,13 @@ name: Deploy Go App to EC2
 on:
   push:
     branches:
-      - dev  # or the branch you want to deploy from
+      - main  # Automatically deploy when pushing to the main branch
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'  # You can set a default branch if desired
 
 jobs:
   deploy:
@@ -12,6 +18,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}  # Checkout the branch specified by the manual trigger
 
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -46,7 +54,7 @@ jobs:
             [Service]
             ExecStart=/home/${{ secrets.EC2_USER }}/myapp
             Restart=always
-            User=${{ secrets.EC2_USER }}
+            User=ec2-user
 
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/myapp.service > /dev/null
