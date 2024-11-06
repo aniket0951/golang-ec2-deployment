@@ -38,9 +38,17 @@ jobs:
 
       - name: Deploy the Go Application to EC2
         run: |
-          # Copy the built Go binary to EC2
+          # SSH into EC2 to rename the old binary if it exists
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Rename the old application if it's running
+            if [ -f /home/${{ secrets.EC2_USER }}/myapp ]; then
+              mv /home/${{ secrets.EC2_USER }}/myapp /home/${{ secrets.EC2_USER }}/myapp.old
+            fi
+          EOF
+
+          # Copy the new Go binary to EC2
           scp -o StrictHostKeyChecking=no myapp ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/myapp
-          
+
           # Create and configure the systemd service on EC2
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             # Create a systemd service file
