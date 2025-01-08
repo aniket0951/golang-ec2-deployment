@@ -11,7 +11,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Add("Content-Type", "application/json")
 
-		json.NewEncoder(w).Encode("function run success one more")
+		json.NewEncoder(w).Encode("function run success one more test")
 	})
 	log.Println("Application up..")
 	err := http.ListenAndServe(":9090", nil)
