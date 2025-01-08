@@ -14,7 +14,7 @@ func main() {
 		json.NewEncoder(w).Encode("function run success test")
 	})
 	log.Println("Application up..")
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":9090", nil)
 	if err != nil {
 		log.Println("Error while creating server : ", err)
 	}
