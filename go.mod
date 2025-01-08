@@ -1,3 +1,3 @@
 module golang-ec2-deploy-gitactions
 
-go 1.23
+go 1.23.0
