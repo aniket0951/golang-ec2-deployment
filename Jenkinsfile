@@ -2,7 +2,8 @@ pipeline {
     agent any
     environment {
         GIT_CREDENTIALS = 'github_creds'
-        EC2_HOST = '${{ secrets.EC2_SSH_KEY_BASE64 }}'
+        GIT_REPO = 'https://github.com/aniket0951/golang-ec2-deployment'
+        EC2_HOST = 'ubuntu@ec2-13-234-238-5.ap-south-1.compute.amazonaws.com'
         APP_NAME = 'my-go-app'
         SSH_KEY_ID = 'ec2_ssh_id'
         APP_DIR = 'golang-app'
