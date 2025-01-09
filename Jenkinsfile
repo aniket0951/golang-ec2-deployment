@@ -1,18 +1,25 @@
 pipeline {
     agent any
+    environment {
+        GIT_CREDENTIALS = 'github_creds'
+        EC2_HOST = '${{ secrets.EC2_SSH_KEY_BASE64 }}'
+        APP_NAME = 'my-go-app'
+        SSH_KEY_ID = 'ec2_ssh_id'
+        APP_DIR = 'golang-app'
+    }
     stages {
 
         stage('Connect to EC2 and Setup Directory') {
             steps {
                 echo 'Connecting to EC2 and setting up the application directory...'
-                withCredentials([sshUserPrivateKey(credentialsId: ${{ secrets.SSH_KEY_ID }}, keyFileVariable: 'SSH_KEY')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: env.SSH_KEY_ID, keyFileVariable: 'SSH_KEY')]) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no -i ] ${{ secrets.SSH_KEY_ID }} ${{ secrets.EC2_HOST}} "
-                        if [ ! -d '${{ secrets.APP_DIR}}' ]; then
-                            echo 'Directory ${{ secrets.APP_DIR}} does not exist. Creating...'
-                            mkdir -p ${{ secrets.APP_DIR}}
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_HOST} "
+                        if [ ! -d '${APP_DIR}' ]; then
+                            echo 'Directory ${APP_DIR} does not exist. Creating...'
+                            mkdir -p ${APP_DIR}
                         else
-                            echo 'Directory ${{ secrets.APP_DIR}} already exists.'
+                            echo 'Directory ${APP_DIR} already exists.'
                         fi
                     "
                     """
@@ -23,10 +30,10 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 echo 'Cloning repository into the application directory...'
-                withCredentials([sshUserPrivateKey(credentialsId: ${{ secrets.SSH_KEY_ID }}, keyFileVariable: 'SSH_KEY')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: env.SSH_KEY_ID, keyFileVariable: 'SSH_KEY')]) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY_ID }}${{ secrets.EC2_HOST}} "
-                        cd ${{ secrets.APP_DIR}}
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_HOST} "
+                        cd ${APP_DIR}
                         // if [ ! -d '.git' ]; then
                         //     echo 'Cloning repository...'
                         //     git clone ${GIT_REPO} .
@@ -46,13 +53,13 @@ pipeline {
         stage('Build Application') {
             steps {
                 echo 'Building the Go application...'
-                withCredentials([sshUserPrivateKey(credentialsId: ${{ secrets.SSH_KEY_ID }}, keyFileVariable: 'SSH_KEY')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: env.SSH_KEY_ID, keyFileVariable: 'SSH_KEY')]) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY_ID }} ${{ secrets.EC2_HOST}} "
-                        cd ${{ secrets.APP_DIR}}
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_HOST} "
+                        cd ${APP_DIR}
                         export PATH=\$PATH:/usr/local/go/bin
                         go version
-                        go build -o ${{ secrets.APP_NAME }}
+                        go build -o ${APP_NAME}
                     "
                     """
                 }
@@ -62,12 +69,12 @@ pipeline {
         stage('Run Application') {
             steps {
                 echo 'Running the application...'
-                withCredentials([sshUserPrivateKey(credentialsId: ${{ secrets.SSH_KEY_ID }}, keyFileVariable: 'SSH_KEY')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: env.SSH_KEY_ID, keyFileVariable: 'SSH_KEY')]) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_KEY_ID }} ${{ secrets.EC2_HOST}} "
-                        cd ${{ secrets.APP_DIR}}
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_HOST} "
+                        cd ${APP_DIR}
                         fuser -k 9090/tcp || true
-                        nohup ./${{ secrets.APP_NAME }} > ${{ secrets.APP_NAME }}.log 2>&1 &
+                        nohup ./${APP_NAME} > ${APP_NAME}.log 2>&1 &
                     "
                     """
                 }
