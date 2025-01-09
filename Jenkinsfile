@@ -35,13 +35,13 @@ pipeline {
                     sh """
                     ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_HOST} "
                         cd ${APP_DIR}
-                        // if [ ! -d '.git' ]; then
-                        //     echo 'Cloning repository...'
-                        //     git clone ${GIT_REPO} .
-                        // else
-                        //     echo 'Pulling latest changes...'
-                        //     git pull origin main
-                        // fi
+                        # if [ ! -d '.git' ]; then
+                        #     echo 'Cloning repository...'
+                        #     git clone ${GIT_REPO} .
+                        # else
+                        #    echo 'Pulling latest changes...'
+                        #     git pull origin main
+                        # fi
 
                         echo 'Pulling latest changes...'
                         git pull origin main
