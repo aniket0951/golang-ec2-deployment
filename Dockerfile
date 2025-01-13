@@ -1,20 +1,19 @@
-# Use the official Golang image as a base
-FROM golang:1.23.0
+# Stage 1: Build the application
+FROM golang:alpine AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
-
-# Copy the Go module files and download dependencies
-COPY go.mod .
+COPY go.mod go.sum ./
 RUN go mod download
-
-# Copy the rest of the application files
 COPY . .
-
-# Build the Go application
 RUN go build -o my-go-app
 
-# Expose the port the app runs on
+# Stage 2: Create a minimal runtime image
+FROM alpine:latest
+
+WORKDIR /app
+COPY --from=builder /app/my-go-app .
+
+# Expose the port
 EXPOSE 9090
 
 # Run the application
