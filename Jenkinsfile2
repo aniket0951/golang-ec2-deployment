@@ -1,0 +1,65 @@
+pipeline {
+    agent any
+    environment {
+        GIT_CREDENTIALS = 'github_creds'
+        GIT_REPO = 'https://github.com/aniket0951/golang-ec2-deployment'
+        EC2_HOST = 'ubuntu@ec2-13-234-238-5.ap-south-1.compute.amazonaws.com'
+        APP_NAME = 'my-go-app'
+        SSH_KEY_ID = 'ec2_ssh_id'
+        APP_DIR = 'golang-app'
+    }
+    stages {
+        stage('Setup Directory') {
+            steps {
+                echo 'Setting up the application directory...'
+                sh """
+                if [ ! -d '${APP_DIR}' ]; then
+                    echo 'Directory ${APP_DIR} does not exist. Creating...'
+                    mkdir -p ${APP_DIR}
+                else
+                    echo 'Directory ${APP_DIR} already exists.'
+                fi
+                """
+            }
+        }
+
+        stage('Clone Repository') {
+            steps {
+                echo 'Cloning repository into the application directory...'
+                sh """
+                cd ${APP_DIR}
+                if [ ! -d '.git' ]; then
+                    echo 'Cloning repository...'
+                    git clone ${GIT_REPO} .
+                else
+                    echo 'Pulling latest changes...'
+                    git pull origin main
+                fi
+                """
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                echo 'Building the Go application...'
+                sh """
+                cd ${APP_DIR}
+                export PATH=\$PATH:/usr/local/go/bin
+                go version
+                go build -o ${APP_NAME}
+                """
+            }
+        }
+
+        stage('Run Application') {
+            steps {
+                echo 'Running the application...'
+                sh """
+                cd ${APP_DIR}
+                fuser -k 9090/tcp || true
+                nohup ./${APP_NAME} > ${APP_NAME}.log 2>&1 &
+                """
+            }
+        }
+    }
+}

@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    environment {
+        GIT_CREDENTIALS = 'github_creds'
+        GIT_REPO = 'https://github.com/aniket0951/golang-ec2-deployment'
+        EC2_HOST = 'ubuntu@ec2-13-234-238-5.ap-south-1.compute.amazonaws.com'
+        APP_NAME = 'my-go-app'
+        SSH_KEY_ID = 'ec2_ssh_id'
+        APP_DIR = 'golang-app'
+        DOCKER_IMAGE = 'my-go-app:latest'
+    }
+    stages {
+        stage('Clone Repository') {
+            steps {
+                echo 'Cloning repository...'
+                sh """
+                    rm -rf app
+                    git clone ${GIT_REPO} app
+                """
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+                sh """
+                cd app
+                docker build -t ${DOCKER_IMAGE} .
+                """
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                echo 'Running the Docker container...'
+                sh """
+                docker stop ${APP_NAME} || true
+                docker rm ${APP_NAME} || true
+                docker run -d --name ${APP_NAME} -p 9090:9090 ${DOCKER_IMAGE}
+                """
+            }
+        }
+    }
+}
