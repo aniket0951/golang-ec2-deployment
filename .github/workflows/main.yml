@@ -43,5 +43,3 @@ jobs:
             docker load < /home/ubuntu/my-go-app.tar
             docker run -d --name $APP_NAME -p 9090:9090 my-go-app:latest
           EOF
-  
-        
