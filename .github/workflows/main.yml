@@ -1,0 +1,47 @@
+name: Manual Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main' 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      GIT_REPO: 'https://github.com/aniket0951/golang-ec2-deployment'
+      EC2_HOST: 'ubuntu@ec2-13-234-238-5.ap-south-1.compute.amazonaws.com'
+      APP_NAME: 'my-go-app'
+      APP_DIR: 'golang-app'
+      DOCKER_IMAGE: 'my-go-app:latest'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker Image
+        run: |
+          docker build -t $DOCKER_IMAGE .
+
+      - name: Copy Docker Image to EC2
+        run: |
+          scp -i ${{ secrets.EC2_SSH_KEY }} my-go-app.tar $EC2_HOST:/home/ubuntu/
+        env:
+          DOCKER_IMAGE: 'my-go-app:latest'
+
+      - name: Deploy on EC2
+        run: |
+          ssh -i ${{ secrets.EC2_SSH_KEY }} $EC2_HOST << 'EOF'
+            docker stop $APP_NAME || true
+            docker rm $APP_NAME || true
+            docker load < /home/ubuntu/my-go-app.tar
+            docker run -d --name $APP_NAME -p 9090:9090 my-go-app:latest
+          EOF
+  
+        
