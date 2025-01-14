@@ -41,8 +41,8 @@ jobs:
       - name: Deploy on EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no $EC2_HOST << 'EOF'
-            docker stop $APP_NAME || true
-            docker rm $APP_NAME || true
-            docker pull $DOCKER_IMAGE
-            docker run -d --name $APP_NAME -p 9090:9090 $DOCKER_IMAGE
-          EOF   
+            sudo docker stop $APP_NAME || true
+            sudo docker rm $APP_NAME || true
+            sudo docker pull $DOCKER_IMAGE
+            sudo docker run -d --name $APP_NAME -p 9090:9090 $DOCKER_IMAGE
+          EOF 
