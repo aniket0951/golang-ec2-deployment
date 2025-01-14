@@ -44,5 +44,5 @@ jobs:
             sudo docker stop $APP_NAME || true
             sudo docker rm $APP_NAME || true
             sudo docker pull $DOCKER_IMAGE
-            sudo docker run -d --name $APP_NAME -p 9090:9090 $DOCKER_IMAGE
+            docker run -d --name my-go-app -p 9090:9090 aniketsuryawanshi/first_go:latest
                     
