@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GIT_REPO: 'https://github.com/aniket0951/golang-ec2-deployment'
-      EC2_HOST: 'ubuntu@ec2-13-234-238-5.ap-south-1.compute.amazonaws.com'
+      EC2_HOST: 'ubuntu@ec2-13-233-184-140.ap-south-1.compute.amazonaws.com'
       APP_NAME: 'my-go-app'
       APP_DIR: 'golang-app'
       DOCKER_IMAGE: 'my-go-app:latest'
