@@ -12,11 +12,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      GIT_REPO: 'https://github.com/aniket0951/golang-ec2-deployment'
+      DOCKER_IMAGE: 'aniketsuryawanshi/first_go:latest'
       EC2_HOST: 'ubuntu@ec2-13-233-184-140.ap-south-1.compute.amazonaws.com'
       APP_NAME: 'my-go-app'
-      APP_DIR: 'golang-app'
-      DOCKER_IMAGE: 'my-go-app:latest'
+      DOCKER_HUB_PASSWORD: '@Aniket@215@'
+      DOCKER_HUB_USERNAME: 'aniketsuryawanshi'
 
     steps:
       - name: Checkout Repository
@@ -25,21 +25,19 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      - name: Build Docker Image
+      - name: Log in to Docker Hub
+        run: echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
+
+      - name: Build and Push Docker Image
         run: |
           docker build -t $DOCKER_IMAGE .
-
-      - name: Copy Docker Image to EC2
-        run: |
-          scp -i ${{ secrets.EC2_SSH_KEY }} my-go-app.tar $EC2_HOST:/home/ubuntu/
-        env:
-          DOCKER_IMAGE: 'my-go-app:latest'
+          docker push $DOCKER_IMAGE
 
       - name: Deploy on EC2
         run: |
-          ssh -i ${{ secrets.EC2_SSH_KEY }} $EC2_HOST << 'EOF'
+          ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no $EC2_HOST << 'EOF'
             docker stop $APP_NAME || true
             docker rm $APP_NAME || true
-            docker load < /home/ubuntu/my-go-app.tar
-            docker run -d --name $APP_NAME -p 9090:9090 my-go-app:latest
+            docker pull $DOCKER_IMAGE
+            docker run -d --name $APP_NAME -p 9090:9090 $DOCKER_IMAGE
           EOF
